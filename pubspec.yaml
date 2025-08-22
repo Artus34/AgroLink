@@ -9,8 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  provider: ^6.1.2 
-
+  # Add this line
+  http: ^1.2.1 
+  provider: ^6.1.1
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

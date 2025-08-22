@@ -64,7 +64,12 @@ class HomeScreen extends StatelessWidget {
                     icon: cardData['icon'],
                     title: cardData['title'],
                     subtitle: cardData['subtitle'],
-                    onTap: () { /* Add navigation logic here */ },
+                    onTap: () {
+                      if (cardData['title'] == 'Predict Crop') {
+                        Navigator.pushNamed(context, '/predict_crop');
+                      }
+                      // You can add navigation logic for other cards here
+                    },
                   );
                 }).toList(),
               ),

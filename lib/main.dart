@@ -7,6 +7,8 @@ import 'features/auth/controllers/auth_provider.dart';
 import 'features/auth/views/login_screen.dart';
 import 'features/auth/views/signup_screen.dart';
 import 'features/home/views/home_screen.dart';
+import 'features/predictions/crop_prediction/controllers/crop_prediction_provider.dart'; // Import the new provider
+import 'features/predictions/crop_prediction/views/crop_prediction_screen.dart'; // Import the new screen
 
 void main() {
   runApp(const MyApp());
@@ -17,8 +19,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => AuthProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => AuthProvider()),
+        ChangeNotifierProvider(create: (context) => CropPredictionProvider()), // Add the new provider here
+      ],
       child: MaterialApp(
         title: 'Agrolink',
         theme: ThemeData(
@@ -31,13 +36,6 @@ class MyApp extends StatelessWidget {
             backgroundColor: AppColors.lightScaffoldBackground,
             foregroundColor: AppColors.textPrimary,
           ),
-          // cardTheme: const CardThemeData( // This entire block is commented out to remove the error
-          //   elevation: 1,
-          //   color: AppColors.lightCard,
-          //   shape: RoundedRectangleBorder(
-          //     borderRadius: BorderRadius.circular(12),
-          //   ),
-          // ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
@@ -56,6 +54,7 @@ class MyApp extends StatelessWidget {
           '/': (context) => LoginScreen(),
           '/home': (context) => const HomeScreen(),
           '/signup': (context) => SignUpScreen(),
+          '/predict_crop': (context) => CropPredictionScreen(), // Add the new route here
         },
       ),
     );
