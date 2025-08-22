@@ -2,6 +2,9 @@
 
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
+// ➡️ Add this import for the new screen
+import '../../predictions/fertilizer_recommendation/views/fertilizer_recommendation_screen.dart';
+import '../../predictions/rainfall_prediction/views/rainfall_prediction_screen.dart'; // Ensure you have this one as well
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -13,6 +16,7 @@ class HomeScreen extends StatelessWidget {
       {'icon': Icons.grass, 'title': 'Predict Crop', 'subtitle': 'Get AI-powered crop suggestions.'},
       {'icon': Icons.trending_up, 'title': 'Yield Prediction', 'subtitle': 'Predict your crop yield.'},
       {'icon': Icons.water_drop_outlined, 'title': 'Predict Rainfall', 'subtitle': 'Estimate annual rainfall.'},
+      // Ensure the title for this card is exactly 'Fertilizer Suggestion'
       {'icon': Icons.science_outlined, 'title': 'Fertilizer Suggestion', 'subtitle': 'Find the right fertilizer.'},
       {'icon': Icons.wb_sunny_outlined, 'title': 'Weather Forecast', 'subtitle': 'View detailed weather forecast.'},
       {'icon': Icons.feedback_outlined, 'title': 'Submit Feedback', 'subtitle': 'Share your thoughts with us.'},
@@ -70,7 +74,21 @@ class HomeScreen extends StatelessWidget {
                       } else if (cardData['title'] == 'Yield Prediction') {
                         Navigator.pushNamed(context, '/predict_yield');
                       } else if (cardData['title'] == 'Predict Rainfall') {
-                        Navigator.pushNamed(context, '/predict_rainfall');
+                        // Use push with MaterialPageRoute for rainfall
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RainfallPredictionScreen(),
+                          ),
+                        );
+                      } else if (cardData['title'] == 'Fertilizer Suggestion') {
+                        // ➡️ Add the navigation logic for the new screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const FertilizerRecommendationScreen(),
+                          ),
+                        );
                       }
                       // You can add navigation logic for other cards here
                     },
