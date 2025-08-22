@@ -69,6 +69,8 @@ class HomeScreen extends StatelessWidget {
                         Navigator.pushNamed(context, '/predict_crop');
                       } else if (cardData['title'] == 'Yield Prediction') {
                         Navigator.pushNamed(context, '/predict_yield');
+                      } else if (cardData['title'] == 'Predict Rainfall') {
+                        Navigator.pushNamed(context, '/predict_rainfall');
                       }
                       // You can add navigation logic for other cards here
                     },
