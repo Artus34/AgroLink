@@ -67,6 +67,8 @@ class HomeScreen extends StatelessWidget {
                     onTap: () {
                       if (cardData['title'] == 'Predict Crop') {
                         Navigator.pushNamed(context, '/predict_crop');
+                      } else if (cardData['title'] == 'Yield Prediction') {
+                        Navigator.pushNamed(context, '/predict_yield');
                       }
                       // You can add navigation logic for other cards here
                     },

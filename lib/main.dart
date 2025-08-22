@@ -7,8 +7,10 @@ import 'features/auth/controllers/auth_provider.dart';
 import 'features/auth/views/login_screen.dart';
 import 'features/auth/views/signup_screen.dart';
 import 'features/home/views/home_screen.dart';
-import 'features/predictions/crop_prediction/controllers/crop_prediction_provider.dart'; // Import the new provider
-import 'features/predictions/crop_prediction/views/crop_prediction_screen.dart'; // Import the new screen
+import 'features/predictions/crop_prediction/controllers/crop_prediction_provider.dart'; 
+import 'features/predictions/crop_prediction/views/crop_prediction_screen.dart'; 
+import 'features/predictions/yield_prediction/controllers/yield_prediction_provider.dart'; // Import the new provider
+import 'features/predictions/yield_prediction/views/yield_prediction_screen.dart'; // Import the new screen
 
 void main() {
   runApp(const MyApp());
@@ -22,7 +24,8 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => AuthProvider()),
-        ChangeNotifierProvider(create: (context) => CropPredictionProvider()), // Add the new provider here
+        ChangeNotifierProvider(create: (context) => CropPredictionProvider()),
+        ChangeNotifierProvider(create: (context) => YieldPredictionProvider()), // Add the new provider here
       ],
       child: MaterialApp(
         title: 'Agrolink',
@@ -54,7 +57,8 @@ class MyApp extends StatelessWidget {
           '/': (context) => LoginScreen(),
           '/home': (context) => const HomeScreen(),
           '/signup': (context) => SignUpScreen(),
-          '/predict_crop': (context) => CropPredictionScreen(), // Add the new route here
+          '/predict_crop': (context) => CropPredictionScreen(),
+          '/predict_yield': (context) => YieldPredictionScreen(), // Add the new route here
         },
       ),
     );
