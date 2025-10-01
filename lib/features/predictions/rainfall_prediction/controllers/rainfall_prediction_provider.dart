@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 
 class RainfallPredictionProvider with ChangeNotifier {
@@ -17,22 +18,20 @@ class RainfallPredictionProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   List<Map<String, dynamic>> get subdivisions => _subdivisions;
 
+  // ➡️ The fix is in this method.
   Future<void> fetchSubdivisions() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final response = await http.get(Uri.parse('$_apiBaseUrl/subdivisions'));
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        _subdivisions = List<Map<String, dynamic>>.from(data);
-      } else {
-        _errorMessage = 'Failed to load subdivisions: ${response.statusCode}';
-      }
+      final String jsonString = await rootBundle.loadString('assets/data/rainfall_frontend_mappings.json');
+      // ➡️ Correctly access the "subdivisions" key from the decoded map
+      final Map<String, dynamic> decodedData = json.decode(jsonString);
+      final List<dynamic> data = decodedData['subdivisions'];
+      _subdivisions = List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      _errorMessage = 'An error occurred: $e';
+      _errorMessage = 'An error occurred while loading subdivisions from assets: $e';
     } finally {
       _isLoading = false;
       notifyListeners();

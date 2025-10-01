@@ -7,6 +7,9 @@ environment:
   sdk: ^3.8.1
 
 dependencies:
+  cloud_firestore: ^6.0.2
+  firebase_auth: ^6.1.0
+  firebase_core: ^4.1.1
   flutter:
     sdk: flutter
   # Add this line
@@ -24,3 +27,4 @@ flutter:
   # To add assets to your application, add an assets section like this:
   assets:
     - assets/category_mappings.json
+    - assets/data/rainfall_frontend_mappings.json
