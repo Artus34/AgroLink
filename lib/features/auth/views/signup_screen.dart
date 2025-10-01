@@ -87,6 +87,22 @@ class SignUpScreen extends StatelessWidget {
                       const SizedBox(height: 24),
                       Consumer<AuthProvider>(
                         builder: (context, auth, child) {
+                          // Error message will show here if signup fails
+                          if (auth.errorMessage != null) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Text(
+                                auth.errorMessage!,
+                                style: const TextStyle(color: Colors.redAccent),
+                                textAlign: TextAlign.center,
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                      Consumer<AuthProvider>(
+                        builder: (context, auth, child) {
                           return auth.isLoading
                               ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen))
                               : ElevatedButton(
@@ -142,22 +158,32 @@ class SignUpScreen extends StatelessWidget {
     );
   }
 
+  // ⭐️⭐️ THIS IS THE UPDATED METHOD ⭐️⭐️
   void _signUpUser(BuildContext context) async {
+    // Hide keyboard
+    FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
       final auth = context.read<AuthProvider>();
-      bool signedUp = await auth.signup(
-        _nameController.text.trim(),
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
-      if (signedUp && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            backgroundColor: AppColors.primaryGreen,
-            content: Text('Account created successfully! Please log in.'),
-          ),
+      try {
+        await auth.signup(
+          _nameController.text.trim(),
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
         );
-        Navigator.pop(context);
+
+        // Check if the widget is still in the tree before showing UI
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: AppColors.primaryGreen,
+              content: Text('Account created successfully! Please log in.'),
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        // The error message is already set in the provider,
+        // and the Consumer widget will display it automatically.
       }
     }
   }

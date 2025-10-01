@@ -11,6 +11,10 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ⭐️ Read the argument passed from the admin screen
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final bool isAdminViewing = args?['isAdminViewing'] ?? false;
+
     // Data for the feature cards
     final List<Map<String, dynamic>> featureCards = [
       {'icon': Icons.grass, 'title': 'Predict Crop', 'subtitle': 'Get AI-powered crop suggestions.'},
@@ -25,7 +29,8 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.lightScaffoldBackground,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
+        // It will now show the back button only when it's possible to go back (i.e., for the admin)
+        automaticallyImplyLeading: Navigator.canPop(context),
         title: const Text(
           'AGROLINK',
           style: TextStyle(
@@ -103,6 +108,18 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
+      // ⭐️ Add a conditional FloatingActionButton visible only to admins
+      floatingActionButton: isAdminViewing
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                // Simply pop the screen to go back to the admin dashboard
+                Navigator.pop(context);
+              },
+              label: const Text('Back to Admin'),
+              icon: const Icon(Icons.shield_outlined),
+              backgroundColor: AppColors.primaryGreen,
+            )
+          : null, // Don't show the button for regular users
     );
   }
 
@@ -233,3 +250,4 @@ class _FeatureCard extends StatelessWidget {
     );
   }
 }
+

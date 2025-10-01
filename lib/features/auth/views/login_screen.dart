@@ -161,16 +161,41 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
+  // ⭐️⭐️ THIS IS THE UPDATED METHOD ⭐️⭐️
   void _loginUser(BuildContext context) async {
+    // Hide keyboard
+    FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
       final auth = context.read<AuthProvider>();
-      bool loggedIn = await auth.login(
+
+      // The login method now returns the role as a String?
+      final String? role = await auth.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
-      if (loggedIn && context.mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+
+      // Check if login was successful and the widget is still mounted
+      if (role != null && context.mounted) {
+        // Redirect based on the role
+        switch (role) {
+          case 'admin':
+            Navigator.pushReplacementNamed(context, '/admin_home');
+            break;
+          case 'user':
+            Navigator.pushReplacementNamed(context, '/home');
+            break;
+          default:
+            // Optional: Handle unknown roles or show an error
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                backgroundColor: Colors.redAccent,
+                content: Text('Could not determine user role.'),
+              ),
+            );
+        }
       }
+      // If role is null, the login failed, and the Consumer widget
+      // will automatically display the error message from the provider.
     }
   }
 }
