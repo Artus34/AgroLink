@@ -1,13 +1,33 @@
-// lib/features/home/views/home_screen.dart
-
 import 'package:flutter/material.dart';
-import '../../../app/theme/app_colors.dart';
-// ➡️ Add this import for the new screen
-import '../../predictions/fertilizer_recommendation/views/fertilizer_recommendation_screen.dart';
-import '../../predictions/rainfall_prediction/views/rainfall_prediction_screen.dart'; // Ensure you have this one as well
+import 'package:provider/provider.dart';
 
-class HomeScreen extends StatelessWidget {
+import '../../../app/theme/app_colors.dart';
+// --- Weather Feature Imports ---
+import '../../market_info/weather/controllers/weather_provider.dart';
+import '../../market_info/weather/services/weather_service.dart';
+import '../../market_info/weather/views/weather_screen.dart';
+// --- Other Feature Imports ---
+import '../../predictions/fertilizer_recommendation/views/fertilizer_recommendation_screen.dart';
+import '../../predictions/rainfall_prediction/views/rainfall_prediction_screen.dart';
+
+// 1. Converted to a StatefulWidget to fetch data on initial load
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // 2. Fetch weather data when the screen is first built
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Use listen: false because we are in initState
+      Provider.of<WeatherProvider>(context, listen: false).fetchWeatherForecast();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +40,6 @@ class HomeScreen extends StatelessWidget {
       {'icon': Icons.grass, 'title': 'Predict Crop', 'subtitle': 'Get AI-powered crop suggestions.'},
       {'icon': Icons.trending_up, 'title': 'Yield Prediction', 'subtitle': 'Predict your crop yield.'},
       {'icon': Icons.water_drop_outlined, 'title': 'Predict Rainfall', 'subtitle': 'Estimate annual rainfall.'},
-      // Ensure the title for this card is exactly 'Fertilizer Suggestion'
       {'icon': Icons.science_outlined, 'title': 'Fertilizer Suggestion', 'subtitle': 'Find the right fertilizer.'},
       {'icon': Icons.wb_sunny_outlined, 'title': 'Weather Forecast', 'subtitle': 'View detailed weather forecast.'},
       {'icon': Icons.feedback_outlined, 'title': 'Submit Feedback', 'subtitle': 'Share your thoughts with us.'},
@@ -29,7 +48,6 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.lightScaffoldBackground,
       appBar: AppBar(
-        // It will now show the back button only when it's possible to go back (i.e., for the admin)
         automaticallyImplyLeading: Navigator.canPop(context),
         title: const Text(
           'AGROLINK',
@@ -60,7 +78,7 @@ class HomeScreen extends StatelessWidget {
               const Text("Here's an overview of your farm and available tools.", style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
               const SizedBox(height: 24),
 
-              // Weather Card
+              // 3. Replaced static weather card with the dynamic one
               _buildWeatherCard(),
               const SizedBox(height: 24),
 
@@ -79,7 +97,6 @@ class HomeScreen extends StatelessWidget {
                       } else if (cardData['title'] == 'Yield Prediction') {
                         Navigator.pushNamed(context, '/predict_yield');
                       } else if (cardData['title'] == 'Predict Rainfall') {
-                        // Use push with MaterialPageRoute for rainfall
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -87,7 +104,6 @@ class HomeScreen extends StatelessWidget {
                           ),
                         );
                       } else if (cardData['title'] == 'Fertilizer Suggestion') {
-                        // ➡️ Add the navigation logic for the new screen
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -112,7 +128,6 @@ class HomeScreen extends StatelessWidget {
       floatingActionButton: isAdminViewing
           ? FloatingActionButton.extended(
               onPressed: () {
-                // Simply pop the screen to go back to the admin dashboard
                 Navigator.pop(context);
               },
               label: const Text('Back to Admin'),
@@ -123,46 +138,48 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Helper widget for the Weather Card
+  // 4. This helper now uses a Consumer to listen to WeatherProvider state changes
   Widget _buildWeatherCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Today's Weather", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-            const SizedBox(height: 4),
-            const Text('Farm Location: Green Valley', style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildWeatherMetric(icon: Icons.wb_sunny, value: '28°C', label: 'Temperature'),
-                _buildWeatherMetric(icon: Icons.opacity, value: '65%', label: 'Humidity'),
-                _buildWeatherMetric(icon: Icons.grain, value: '10%', label: 'Rain Chance'),
-              ],
+    return Consumer<WeatherProvider>(
+      builder: (context, provider, child) {
+        // Handle loading state
+        if (provider.isLoading && provider.weatherData == null) {
+          return const Card(
+            child: SizedBox(
+              height: 150,
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.primaryGreen),
+              ),
             ),
-          ],
-        ),
-      ),
+          );
+        }
+
+        // Handle error state
+        if (provider.errorMessage != null && provider.weatherData == null) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                "Could not load weather data.\nPlease check your connection.",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+          );
+        }
+
+        // Handle success state
+        if (provider.weatherData != null) {
+          return _WeatherDisplayCard(weatherData: provider.weatherData!);
+        }
+
+        // Default empty state
+        return const SizedBox.shrink();
+      },
     );
   }
 
-  // Helper for individual weather metrics
-  Widget _buildWeatherMetric({required IconData icon, required String value, required String label}) {
-    return Column(
-      children: [
-        Icon(icon, size: 32, color: AppColors.primaryGreen),
-        const SizedBox(height: 8),
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-      ],
-    );
-  }
-
-  // Helper widget for the Crop Sales Card
+  // Helper widget for the Crop Sales Card (Unchanged)
   Widget _buildCropSalesCard() {
     return Card(
       child: Padding(
@@ -187,7 +204,91 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// A reusable widget for the feature cards in the grid
+// 5. A new, dedicated widget to display the weather card and handle taps
+class _WeatherDisplayCard extends StatelessWidget {
+  final WeatherData weatherData;
+
+  const _WeatherDisplayCard({required this.weatherData});
+
+  @override
+  Widget build(BuildContext context) {
+    final current = weatherData.current;
+    final location = weatherData.location;
+
+    return Card(
+      elevation: 4.0,
+      color: AppColors.lightCard,
+      shadowColor: AppColors.primaryGreen.withOpacity(0.2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          // Navigate to the detailed weather screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const WeatherScreen()),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${current.tempC.round()}°C',
+                      style: const TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w300,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      location.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.network(
+                    'https:${current.iconUrl}',
+                    width: 70,
+                    height: 70,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.cloud_off, color: AppColors.textSecondary, size: 70),
+                  ),
+                  Text(
+                    current.conditionText,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// A reusable widget for the feature cards in the grid (Unchanged)
 class _FeatureCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -205,16 +306,9 @@ class _FeatureCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Determine the number of columns based on screen width
-        final screenWidth = constraints.maxWidth;
-        int crossAxisCount = 2; // Default for mobile
-        if (screenWidth > 600 && screenWidth < 900) {
-          crossAxisCount = 3; // For tablets
-        } else if (screenWidth >= 900) {
-          crossAxisCount = 4; // For desktops/web
-        }
-        
-        final double itemWidth = (screenWidth - (16 * (crossAxisCount + 1))) / crossAxisCount;
+        final screenWidth = MediaQuery.of(context).size.width;
+        int crossAxisCount = screenWidth < 600 ? 2 : (screenWidth < 900 ? 3 : 4);
+        double itemWidth = (screenWidth - (16 * (crossAxisCount + 1))) / crossAxisCount;
 
         return SizedBox(
           width: itemWidth,
