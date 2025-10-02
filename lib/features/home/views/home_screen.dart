@@ -1,18 +1,13 @@
+import 'package:agrolink/features/crop_analysis/views/crop_analysis_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../../../app/theme/app_colors.dart';
-// --- Weather Feature Imports ---
 import '../../market_info/weather/controllers/weather_provider.dart';
 import '../../market_info/weather/services/weather_service.dart';
 import '../../market_info/weather/views/weather_screen.dart';
-// --- News Feature Imports ---
 import '../../market_info/news/controllers/news_provider.dart';
-import '../../market_info/news/services/article_news_service.dart';
-import '../../market_info/news/services/video_news_service.dart';
 import '../../market_info/news/views/news_feed_screen.dart';
-// --- Other Feature Imports ---
 import '../../predictions/fertilizer_recommendation/views/fertilizer_recommendation_screen.dart';
 import '../../predictions/rainfall_prediction/views/rainfall_prediction_screen.dart';
 
@@ -60,6 +55,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final List<Map<String, dynamic>> featureCards = [
       {'icon': Icons.grass, 'title': 'Predict Crop', 'subtitle': 'Get AI-powered crop suggestions.'},
       {'icon': Icons.trending_up, 'title': 'Yield Prediction', 'subtitle': 'Predict your crop yield.'},
+      // 🆕 ADDED: The new Crop Analysis feature card
+      {'icon': Icons.show_chart, 'title': 'Crop Analysis', 'subtitle': 'View market and price trends.'},
+      // ------------------------------------------------
       {'icon': Icons.water_drop_outlined, 'title': 'Predict Rainfall', 'subtitle': 'Estimate annual rainfall.'},
       {'icon': Icons.science_outlined, 'title': 'Fertilizer Suggestion', 'subtitle': 'Find the right fertilizer.'},
       {'icon': Icons.feedback_outlined, 'title': 'Submit Feedback', 'subtitle': 'Share your thoughts with us.'},
@@ -114,7 +112,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         Navigator.pushNamed(context, '/predict_crop');
                       } else if (cardData['title'] == 'Yield Prediction') {
                         Navigator.pushNamed(context, '/predict_yield');
-                      } else if (cardData['title'] == 'Predict Rainfall') {
+                      } 
+                      // 🆕 ADDED: Navigation logic for the new Crop Analysis module
+                      else if (cardData['title'] == 'Crop Analysis') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CropAnalysisScreen(),
+                          ),
+                        );
+                      }
+                      // ----------------------------------------------------
+                      else if (cardData['title'] == 'Predict Rainfall') {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -168,9 +177,9 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
         if (provider.errorMessage != null && provider.weatherData == null) {
-          return Card(
+          return const Card(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(16.0),
               child: Text(
                 "Could not load weather data.\nPlease check your connection.",
                 textAlign: TextAlign.center,
@@ -234,7 +243,7 @@ class _NewsPanel extends StatelessWidget {
             const TabBar(
               indicatorColor: AppColors.primaryGreen,
               labelColor: AppColors.primaryGreen,
-              unselectedLabelColor: AppColors.textSecondary,
+              unselectedLabelColor: Color.fromARGB(255, 251, 137, 137),
               tabs: [
                 Tab(text: 'ARTICLES'),
                 Tab(text: 'VIDEOS'),
@@ -294,7 +303,7 @@ class _NewsPanel extends StatelessWidget {
               errorBuilder: (_, __, ___) => const Icon(Icons.image),
             ),
           ),
-          title: Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w500)),
+          title: Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w500)),
           // ✅ FIX: Changed `article.url` to `article.articleUrl`
           onTap: () => onLaunchUrl(article.articleUrl),
         );
@@ -327,7 +336,7 @@ class _NewsPanel extends StatelessWidget {
               errorBuilder: (_, __, ___) => const Icon(Icons.play_circle_outline),
             ),
           ),
-          title: Text(video.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w500)),
+          title: Text(video.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w500)),
           onTap: () => onLaunchUrl(video.videoUrl),
         );
       },

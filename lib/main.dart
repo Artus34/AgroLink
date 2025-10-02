@@ -1,3 +1,4 @@
+import 'package:agrolink/features/crop_analysis/controllers/crop_analysis_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +24,6 @@ import 'features/predictions/rainfall_prediction/views/rainfall_prediction_scree
 import 'features/market_info/weather/controllers/weather_provider.dart';
 // ✅ ADDED: Import for the new NewsProvider.
 import 'features/market_info/news/controllers/news_provider.dart';
-
 
 void main() async {
   // Ensure all necessary services are initialized before running the app.
@@ -52,11 +52,15 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => CropPredictionProvider()),
         ChangeNotifierProvider(create: (context) => YieldPredictionProvider()),
-        ChangeNotifierProvider(create: (context) => RainfallPredictionProvider()),
-        ChangeNotifierProvider(create: (context) => FertilizerRecommendationProvider()),
+        ChangeNotifierProvider(
+            create: (context) => RainfallPredictionProvider()),
+        ChangeNotifierProvider(
+            create: (context) => FertilizerRecommendationProvider()),
         ChangeNotifierProvider(create: (context) => WeatherProvider()),
         // ✅ ADDED: Registered the NewsProvider so the app can use it.
         ChangeNotifierProvider(create: (context) => NewsProvider()),
+        ChangeNotifierProvider(create: (_) => CropAnalysisProvider(),
+        ),
       ],
       child: MaterialApp(
         title: 'Agrolink',
@@ -78,7 +82,8 @@ class MyApp extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              textStyle:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -88,7 +93,7 @@ class MyApp extends StatelessWidget {
           '/': (context) => LoginScreen(),
           '/home': (context) => const HomeScreen(),
           '/signup': (context) => SignUpScreen(),
-          '/admin_home': (context) => const AdminHomeScreen(),
+          // '/admin_home': (context) => const AdminHomeScreen(),
           // Your other prediction routes
           '/predict_crop': (context) => CropPredictionScreen(),
           '/predict_yield': (context) => YieldPredictionScreen(),
@@ -98,4 +103,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
