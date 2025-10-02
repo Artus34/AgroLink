@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/theme/app_colors.dart';
 // --- Weather Feature Imports ---
 import '../../market_info/weather/controllers/weather_provider.dart';
 import '../../market_info/weather/services/weather_service.dart';
 import '../../market_info/weather/views/weather_screen.dart';
+// --- News Feature Imports ---
+import '../../market_info/news/controllers/news_provider.dart';
+import '../../market_info/news/services/article_news_service.dart';
+import '../../market_info/news/services/video_news_service.dart';
+import '../../market_info/news/views/news_feed_screen.dart';
 // --- Other Feature Imports ---
 import '../../predictions/fertilizer_recommendation/views/fertilizer_recommendation_screen.dart';
 import '../../predictions/rainfall_prediction/views/rainfall_prediction_screen.dart';
 
-// 1. Converted to a StatefulWidget to fetch data on initial load
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -19,23 +24,38 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // 2. Fetch weather data when the screen is first built
   @override
   void initState() {
     super.initState();
+    // Fetch all necessary data when the screen is first built.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Use listen: false because we are in initState
-      Provider.of<WeatherProvider>(context, listen: false).fetchWeatherForecast();
+      final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
+      final newsProvider = Provider.of<NewsProvider>(context, listen: false);
+
+      // Fetch weather and both types of news.
+      weatherProvider.fetchWeatherForecast();
+      newsProvider.fetchArticles();
+      newsProvider.fetchVideos();
     });
+  }
+
+  // Helper method to launch URLs safely.
+  Future<void> _launchUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(url)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch $urlString')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // ⭐️ Read the argument passed from the admin screen
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final bool isAdminViewing = args?['isAdminViewing'] ?? false;
 
-    // Data for the feature cards
     final List<Map<String, dynamic>> featureCards = [
       {'icon': Icons.grass, 'title': 'Predict Crop', 'subtitle': 'Get AI-powered crop suggestions.'},
       {'icon': Icons.trending_up, 'title': 'Yield Prediction', 'subtitle': 'Predict your crop yield.'},
@@ -72,17 +92,15 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome Message
               const Text('Welcome back, Farmer Joe!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               const Text("Here's an overview of your farm and available tools.", style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
               const SizedBox(height: 24),
-
-              // 3. Replaced static weather card with the dynamic one
               _buildWeatherCard(),
               const SizedBox(height: 24),
-
-              // Feature Grid (Responsive)
+              // ✅ NEW: Added the dynamic news panel.
+              _NewsPanel(onLaunchUrl: _launchUrl),
+              const SizedBox(height: 24),
               Wrap(
                 spacing: 16,
                 runSpacing: 16,
@@ -111,20 +129,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         );
                       }
-                      // You can add navigation logic for other cards here
                     },
                   );
                 }).toList(),
               ),
               const SizedBox(height: 24),
-
-              // Crop Sales Card
               _buildCropSalesCard(),
             ],
           ),
         ),
       ),
-      // ⭐️ Add a conditional FloatingActionButton visible only to admins
       floatingActionButton: isAdminViewing
           ? FloatingActionButton.extended(
               onPressed: () {
@@ -134,15 +148,15 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Icon(Icons.shield_outlined),
               backgroundColor: AppColors.primaryGreen,
             )
-          : null, // Don't show the button for regular users
+          : null,
     );
   }
 
-  // 4. This helper now uses a Consumer to listen to WeatherProvider state changes
+  // --- UNCHANGED WIDGETS BELOW ---
+
   Widget _buildWeatherCard() {
     return Consumer<WeatherProvider>(
       builder: (context, provider, child) {
-        // Handle loading state
         if (provider.isLoading && provider.weatherData == null) {
           return const Card(
             child: SizedBox(
@@ -153,8 +167,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         }
-
-        // Handle error state
         if (provider.errorMessage != null && provider.weatherData == null) {
           return Card(
             child: Padding(
@@ -167,19 +179,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         }
-
-        // Handle success state
         if (provider.weatherData != null) {
           return _WeatherDisplayCard(weatherData: provider.weatherData!);
         }
-
-        // Default empty state
         return const SizedBox.shrink();
       },
     );
   }
 
-  // Helper widget for the Crop Sales Card (Unchanged)
   Widget _buildCropSalesCard() {
     return Card(
       child: Padding(
@@ -204,7 +211,129 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// 5. A new, dedicated widget to display the weather card and handle taps
+// --- NEW NEWS PANEL WIDGET ---
+
+class _NewsPanel extends StatelessWidget {
+  final Function(String) onLaunchUrl;
+  const _NewsPanel({required this.onLaunchUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4.0,
+      color: AppColors.lightCard,
+      shadowColor: AppColors.primaryGreen.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            const TabBar(
+              indicatorColor: AppColors.primaryGreen,
+              labelColor: AppColors.primaryGreen,
+              unselectedLabelColor: AppColors.textSecondary,
+              tabs: [
+                Tab(text: 'ARTICLES'),
+                Tab(text: 'VIDEOS'),
+              ],
+            ),
+            SizedBox(
+              height: 240, // Constrained height for the panel
+              child: Consumer<NewsProvider>(
+                builder: (context, provider, child) {
+                  return TabBarView(
+                    children: [
+                      _buildArticlePreview(context, provider),
+                      _buildVideoPreview(context, provider),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const Divider(height: 1),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const NewsFeedScreen()),
+                );
+              },
+              child: const Text('VIEW ALL NEWS', style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildArticlePreview(BuildContext context, NewsProvider provider) {
+    if (provider.isArticlesLoading && provider.articles.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+    }
+    if (provider.articleErrorMessage != null) {
+      return Center(child: Text(provider.articleErrorMessage!));
+    }
+    // Take first 3 articles for preview
+    final articlesToShow = provider.articles.take(3).toList();
+    return ListView.separated(
+      padding: const EdgeInsets.all(8),
+      itemCount: articlesToShow.length,
+      itemBuilder: (context, index) {
+        final article = articlesToShow[index];
+        return ListTile(
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: Image.network(
+              article.imageUrl,
+              width: 56,
+              height: 56,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const Icon(Icons.image),
+            ),
+          ),
+          title: Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w500)),
+          // ✅ FIX: Changed `article.url` to `article.articleUrl`
+          onTap: () => onLaunchUrl(article.articleUrl),
+        );
+      },
+      separatorBuilder: (_, __) => const Divider(indent: 72),
+    );
+  }
+
+  Widget _buildVideoPreview(BuildContext context, NewsProvider provider) {
+    if (provider.isVideosLoading && provider.videos.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+    }
+    if (provider.videoErrorMessage != null) {
+      return Center(child: Text(provider.videoErrorMessage!));
+    }
+    final videosToShow = provider.videos.take(3).toList();
+    return ListView.separated(
+      padding: const EdgeInsets.all(8),
+      itemCount: videosToShow.length,
+      itemBuilder: (context, index) {
+        final video = videosToShow[index];
+        return ListTile(
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: Image.network(
+              video.thumbnailUrl,
+              width: 56,
+              height: 56,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const Icon(Icons.play_circle_outline),
+            ),
+          ),
+          title: Text(video.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w500)),
+          onTap: () => onLaunchUrl(video.videoUrl),
+        );
+      },
+      separatorBuilder: (_, __) => const Divider(indent: 72),
+    );
+  }
+}
+
+
 class _WeatherDisplayCard extends StatelessWidget {
   final WeatherData weatherData;
 
@@ -223,7 +352,6 @@ class _WeatherDisplayCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
-          // Navigate to the detailed weather screen
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const WeatherScreen()),
@@ -288,7 +416,6 @@ class _WeatherDisplayCard extends StatelessWidget {
   }
 }
 
-// A reusable widget for the feature cards in the grid (Unchanged)
 class _FeatureCard extends StatelessWidget {
   final IconData icon;
   final String title;
