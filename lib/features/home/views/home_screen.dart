@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../app/theme/app_colors.dart';
-import '../../auth/controllers/auth_provider.dart'; // ⭐️ ADDED: Import AuthProvider
-import '../../auth/views/profile_screen.dart'; // ⭐️ ADDED: Import ProfileScreen
+import '../../auth/controllers/auth_provider.dart';
+import '../../auth/views/profile_screen.dart';
+// ⭐️ ADDED: Import for the Sales Dashboard Screen
+import '../../crop_sales/views/sales_dashboard_screen.dart';
 import '../../market_info/weather/controllers/weather_provider.dart';
 import '../../market_info/weather/services/weather_service.dart';
 import '../../market_info/weather/views/weather_screen.dart';
@@ -53,17 +55,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final bool isAdminViewing = args?['isAdminViewing'] ?? false;
     
-    // ⭐️ ADDED: Access the auth provider to get user data
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.userModel;
 
-    // REMOVED: {'icon': Icons.wb_sunny_outlined, 'title': 'Weather Forecast', 'subtitle': 'View detailed weather forecast.'},
     final List<Map<String, dynamic>> featureCards = [
+      // ⭐️ ADDED: The new Marketplace feature card
+      {'icon': Icons.storefront_outlined, 'title': 'Marketplace', 'subtitle': 'Buy and sell crops directly.'},
       {'icon': Icons.grass, 'title': 'Predict Crop', 'subtitle': 'Get AI-powered crop suggestions.'},
       {'icon': Icons.trending_up, 'title': 'Yield Prediction', 'subtitle': 'Predict your crop yield.'},
-      // 🆕 ADDED: The new Crop Analysis feature card
       {'icon': Icons.show_chart, 'title': 'Crop Analysis', 'subtitle': 'View market and price trends.'},
-      // ------------------------------------------------
       {'icon': Icons.water_drop_outlined, 'title': 'Predict Rainfall', 'subtitle': 'Estimate annual rainfall.'},
       {'icon': Icons.science_outlined, 'title': 'Fertilizer Suggestion', 'subtitle': 'Find the right fertilizer.'},
       {'icon': Icons.feedback_outlined, 'title': 'Submit Feedback', 'subtitle': 'Share your thoughts with us.'},
@@ -80,7 +80,6 @@ class _HomeScreenState extends State<HomeScreen> {
             color: AppColors.primaryGreen,
           ),
         ),
-        // ⭐️ MODIFIED: AppBar actions are now dynamic
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
@@ -103,14 +102,12 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ⭐️ MODIFIED: Welcome message is now dynamic
               Text(
                 'Welcome back, ${user?.name ?? 'User'}!',
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 8),
 
-              // ⭐️ ADDED: Display the user's role
               if (user != null)
                 Chip(
                   label: Text(
@@ -127,7 +124,6 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 24),
               _buildWeatherCard(),
               const SizedBox(height: 24),
-              // ✅ NEW: Added the dynamic news panel.
               _NewsPanel(onLaunchUrl: _launchUrl),
               const SizedBox(height: 24),
               Wrap(
@@ -139,12 +135,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     title: cardData['title'],
                     subtitle: cardData['subtitle'],
                     onTap: () {
-                      if (cardData['title'] == 'Predict Crop') {
+                      // ⭐️ ADDED: Navigation logic for the new Marketplace card
+                      if (cardData['title'] == 'Marketplace') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const SalesDashboardScreen()),
+                        );
+                      } else if (cardData['title'] == 'Predict Crop') {
                         Navigator.pushNamed(context, '/predict_crop');
                       } else if (cardData['title'] == 'Yield Prediction') {
                         Navigator.pushNamed(context, '/predict_yield');
                       }
-                      // 🆕 ADDED: Navigation logic for the new Crop Analysis module
                       else if (cardData['title'] == 'Crop Analysis') {
                         Navigator.push(
                           context,
@@ -153,7 +154,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         );
                       }
-                      // ----------------------------------------------------
                       else if (cardData['title'] == 'Predict Rainfall') {
                         Navigator.push(
                           context,
@@ -174,7 +174,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 24),
-              // REMOVED: _buildCropSalesCard(),
             ],
           ),
         ),
@@ -191,8 +190,6 @@ class _HomeScreenState extends State<HomeScreen> {
           : null,
     );
   }
-
-  // --- UNCHANGED WIDGETS BELOW ---
 
   Widget _buildWeatherCard() {
     return Consumer<WeatherProvider>(
@@ -226,35 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-
-  // REMOVED: _buildCropSalesCard()
-  /*
-  Widget _buildCropSalesCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Crop Sales', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-            const SizedBox(height: 4),
-            const Text('Track your crop sales and revenue.', style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-            const SizedBox(height: 16),
-            const Text('Monitor sales performance and generate reports.'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text('View Sales (Placeholder)'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  */
 }
-
-// --- NEW NEWS PANEL WIDGET ---
 
 class _NewsPanel extends StatelessWidget {
   final Function(String) onLaunchUrl;
@@ -316,7 +285,6 @@ class _NewsPanel extends StatelessWidget {
     if (provider.articleErrorMessage != null) {
       return Center(child: Text(provider.articleErrorMessage!));
     }
-    // Take first 3 articles for preview
     final articlesToShow = provider.articles.take(3).toList();
     return ListView.separated(
       padding: const EdgeInsets.all(8),
@@ -335,7 +303,6 @@ class _NewsPanel extends StatelessWidget {
             ),
           ),
           title: Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w500)),
-          // ✅ FIX: Changed `article.url` to `article.articleUrl`
           onTap: () => onLaunchUrl(article.articleUrl),
         );
       },

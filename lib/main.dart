@@ -9,7 +9,6 @@ import 'features/auth/controllers/auth_provider.dart';
 import 'features/auth/views/login_screen.dart';
 import 'features/auth/views/signup_screen.dart';
 import 'features/home/views/home_screen.dart';
-import 'features/home/views/admin_home_screen.dart';
 import 'firebase_options.dart';
 
 // Your other provider imports
@@ -20,10 +19,11 @@ import 'features/predictions/fertilizer_recommendation/controllers/fertilizer_re
 import 'features/predictions/crop_prediction/views/crop_prediction_screen.dart';
 import 'features/predictions/yield_prediction/views/yield_prediction_screen.dart';
 import 'features/predictions/rainfall_prediction/views/rainfall_prediction_screen.dart';
-// --- Feature Provider Imports ---
 import 'features/market_info/weather/controllers/weather_provider.dart';
-// ✅ ADDED: Import for the new NewsProvider.
 import 'features/market_info/news/controllers/news_provider.dart';
+
+// ⭐️ ADDED: Import for the new SalesProvider.
+import 'features/crop_sales/controllers/sales_provider.dart';
 
 void main() async {
   // Ensure all necessary services are initialized before running the app.
@@ -49,7 +49,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // --- AUTH & DEPENDENT PROVIDERS ---
         ChangeNotifierProvider(create: (context) => AuthProvider()),
+        // ⭐️ ADDED: ChangeNotifierProxyProvider for SalesProvider.
+        // This makes SalesProvider listen to changes in AuthProvider.
+        ChangeNotifierProxyProvider<AuthProvider, SalesProvider>(
+          create: (context) => SalesProvider(),
+          update: (context, authProvider, previousSalesProvider) =>
+              previousSalesProvider!..update(authProvider),
+        ),
+
+        // --- INDEPENDENT PROVIDERS ---
         ChangeNotifierProvider(create: (context) => CropPredictionProvider()),
         ChangeNotifierProvider(create: (context) => YieldPredictionProvider()),
         ChangeNotifierProvider(
@@ -57,10 +67,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
             create: (context) => FertilizerRecommendationProvider()),
         ChangeNotifierProvider(create: (context) => WeatherProvider()),
-        // ✅ ADDED: Registered the NewsProvider so the app can use it.
         ChangeNotifierProvider(create: (context) => NewsProvider()),
-        ChangeNotifierProvider(create: (_) => CropAnalysisProvider(),
-        ),
+        ChangeNotifierProvider(create: (_) => CropAnalysisProvider()),
       ],
       child: MaterialApp(
         title: 'Agrolink',
@@ -92,8 +100,8 @@ class MyApp extends StatelessWidget {
         routes: {
           '/': (context) => LoginScreen(),
           '/home': (context) => const HomeScreen(),
-          '/signup': (context) => SignUpScreen(),
-          // '/admin_home': (context) => const AdminHomeScreen(),
+          '/signup': (context) => const SignUpScreen(),
+          // '/admin_home': (context) => const AdminHomeScreen(), // This can be removed
           // Your other prediction routes
           '/predict_crop': (context) => CropPredictionScreen(),
           '/predict_yield': (context) => YieldPredictionScreen(),
