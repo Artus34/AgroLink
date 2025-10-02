@@ -1,17 +1,33 @@
-// lib/features/auth/views/signup_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../app/theme/app_colors.dart';
 import '../controllers/auth_provider.dart';
 
-class SignUpScreen extends StatelessWidget {
-  SignUpScreen({super.key});
+// ⭐️ MODIFICATION 1: Converted to a StatefulWidget to handle state for the role selector.
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
+  @override
+  State<SignUpScreen> createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  // ⭐️ MODIFICATION 2: Added state variables for the role selection.
+  String _selectedRole = 'user'; // Defaults to 'user'
+  final List<bool> _isSelected = [true, false]; // [user, farmer]
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,9 +101,13 @@ class SignUpScreen extends StatelessWidget {
                         validator: (value) => (value == null || value.length < 6) ? 'Password is too short' : null,
                       ),
                       const SizedBox(height: 24),
+
+                      // ⭐️ MODIFICATION 3: Added the new role selector widget to the form.
+                      _buildRoleSelector(),
+
+                      const SizedBox(height: 24),
                       Consumer<AuthProvider>(
                         builder: (context, auth, child) {
-                          // Error message will show here if signup fails
                           if (auth.errorMessage != null) {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 10),
@@ -158,20 +178,58 @@ class SignUpScreen extends StatelessWidget {
     );
   }
 
-  // ⭐️⭐️ THIS IS THE UPDATED METHOD ⭐️⭐️
+  // ⭐️ MODIFICATION 4: This is the new widget for selecting a role.
+  Widget _buildRoleSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text('I am a:', style: TextStyle(color: AppColors.fontSecondary, fontSize: 16)),
+        const SizedBox(height: 8),
+        ToggleButtons(
+          isSelected: _isSelected,
+          onPressed: (int index) {
+            setState(() {
+              for (int i = 0; i < _isSelected.length; i++) {
+                _isSelected[i] = i == index;
+              }
+              _selectedRole = index == 0 ? 'user' : 'farmer';
+            });
+          },
+          borderRadius: BorderRadius.circular(8.0),
+          selectedBorderColor: AppColors.primaryGreen,
+          selectedColor: Colors.white,
+          fillColor: AppColors.primaryGreen,
+          color: AppColors.primaryGreen,
+          constraints: const BoxConstraints(minHeight: 40.0, minWidth: 100.0),
+          children: const [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text('User'),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text('Farmer'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ⭐️⭐️ THIS IS THE CORRECTED METHOD ⭐️⭐️
   void _signUpUser(BuildContext context) async {
-    // Hide keyboard
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
       final auth = context.read<AuthProvider>();
       try {
+        // ⭐️ FIX: Switched to named parameters to match the provider's definition.
         await auth.signup(
-          _nameController.text.trim(),
-          _emailController.text.trim(),
-          _passwordController.text.trim(),
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+          role: _selectedRole,
         );
 
-        // Check if the widget is still in the tree before showing UI
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -182,9 +240,9 @@ class SignUpScreen extends StatelessWidget {
           Navigator.pop(context);
         }
       } catch (e) {
-        // The error message is already set in the provider,
-        // and the Consumer widget will display it automatically.
+        // Error is handled by the provider and displayed by the Consumer.
       }
     }
   }
 }
+

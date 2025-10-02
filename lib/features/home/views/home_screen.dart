@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../auth/controllers/auth_provider.dart'; // ⭐️ ADDED: Import AuthProvider
+import '../../auth/views/profile_screen.dart'; // ⭐️ ADDED: Import ProfileScreen
 import '../../market_info/weather/controllers/weather_provider.dart';
 import '../../market_info/weather/services/weather_service.dart';
 import '../../market_info/weather/views/weather_screen.dart';
@@ -50,6 +52,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final bool isAdminViewing = args?['isAdminViewing'] ?? false;
+    
+    // ⭐️ ADDED: Access the auth provider to get user data
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.userModel;
 
     // REMOVED: {'icon': Icons.wb_sunny_outlined, 'title': 'Weather Forecast', 'subtitle': 'View detailed weather forecast.'},
     final List<Map<String, dynamic>> featureCards = [
@@ -74,12 +80,19 @@ class _HomeScreenState extends State<HomeScreen> {
             color: AppColors.primaryGreen,
           ),
         ),
-        actions: const [
+        // ⭐️ MODIFIED: AppBar actions are now dynamic
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              backgroundColor: AppColors.primaryGreen,
-              child: Text('FJ', style: TextStyle(color: Colors.white)),
+            padding: const EdgeInsets.only(right: 16.0),
+            child: IconButton(
+              icon: const Icon(Icons.account_circle, size: 30, color: AppColors.primaryGreen),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                );
+              },
+              tooltip: 'View Profile',
             ),
           ),
         ],
@@ -90,9 +103,27 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Welcome back, Farmer Joe!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+              // ⭐️ MODIFIED: Welcome message is now dynamic
+              Text(
+                'Welcome back, ${user?.name ?? 'User'}!',
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              ),
               const SizedBox(height: 8),
-              const Text("Here's an overview of your farm and available tools.", style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+
+              // ⭐️ ADDED: Display the user's role
+              if (user != null)
+                Chip(
+                  label: Text(
+                    user.role.toUpperCase(),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                  backgroundColor: user.role == 'farmer' ? Colors.green.shade100 : Colors.blue.shade100,
+                  avatar: Icon(
+                    user.role == 'farmer' ? Icons.eco : Icons.person,
+                    color: user.role == 'farmer' ? Colors.green : Colors.blue,
+                  ),
+                ),
+
               const SizedBox(height: 24),
               _buildWeatherCard(),
               const SizedBox(height: 24),
@@ -112,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Navigator.pushNamed(context, '/predict_crop');
                       } else if (cardData['title'] == 'Yield Prediction') {
                         Navigator.pushNamed(context, '/predict_yield');
-                      } 
+                      }
                       // 🆕 ADDED: Navigation logic for the new Crop Analysis module
                       else if (cardData['title'] == 'Crop Analysis') {
                         Navigator.push(
@@ -483,3 +514,4 @@ class _FeatureCard extends StatelessWidget {
     );
   }
 }
+

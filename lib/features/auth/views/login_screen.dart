@@ -1,5 +1,3 @@
-// lib/features/auth/views/login_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../app/theme/app_colors.dart';
@@ -161,41 +159,28 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  // ⭐️⭐️ THIS IS THE UPDATED METHOD ⭐️⭐️
+  // ⭐️⭐️ THIS IS THE CORRECTED METHOD ⭐️⭐️
   void _loginUser(BuildContext context) async {
     // Hide keyboard
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
       final auth = context.read<AuthProvider>();
 
-      // The login method now returns the role as a String?
-      final String? role = await auth.login(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
+      // The login method now returns a boolean.
+      // ⭐️ FIX: Switched to named parameters to match the provider's definition.
+      final bool success = await auth.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      ); // <-- Semicolon added and 'Login' changed to 'login'
 
-      // Check if login was successful and the widget is still mounted
-      if (role != null && context.mounted) {
-        // Redirect based on the role
-        switch (role) {
-          case 'admin':
-            Navigator.pushReplacementNamed(context, '/admin_home');
-            break;
-          case 'user':
-            Navigator.pushReplacementNamed(context, '/home');
-            break;
-          default:
-            // Optional: Handle unknown roles or show an error
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                backgroundColor: Colors.redAccent,
-                content: Text('Could not determine user role.'),
-              ),
-            );
-        }
+      // Check if login was successful and the widget is still mounted.
+      // Both 'user' and 'farmer' roles will navigate to the home screen.
+      if (success && context.mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
       }
-      // If role is null, the login failed, and the Consumer widget
-      // will automatically display the error message from the provider.
+      // If success is false, the Consumer widget will automatically
+      // display the error message from the provider.
     }
   }
 }
+

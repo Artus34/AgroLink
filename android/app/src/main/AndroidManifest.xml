@@ -3,6 +3,11 @@
     <!-- Add this line for internet access -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- ⭐️ PERMISSIONS ADDED FOR IMAGE PICKER ⭐️ -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- End of added permissions -->
+
     <application
         android:label="agrolink"
         android:name="${applicationName}"
@@ -47,4 +52,3 @@
         </intent>
     </queries>
 </manifest>
-
