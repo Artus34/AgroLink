@@ -1,4 +1,7 @@
+// lib/features/market_info/news/controllers/news_provider.dart
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../services/article_news_service.dart';
 import '../services/video_news_service.dart';
@@ -22,33 +25,15 @@ class NewsProvider with ChangeNotifier {
   String? _videoErrorMessage;
   String? get videoErrorMessage => _videoErrorMessage;
 
-  // --- Shared Filter State ---
-  String? _selectedCountryCode;
-  String? get selectedCountryCode => _selectedCountryCode;
-
-  // ✅ REMOVED: Language filter state is no longer needed.
-  // String? _selectedLanguageCode;
-  // String? get selectedLanguageCode => _selectedLanguageCode;
-
+  // Constructor to load initial data
+  NewsProvider() {
+    fetchArticles();
+    fetchVideos();
+  }
 
   // --- Methods ---
 
-  /// ✅ RENAMED & UPDATED: Updates the country and triggers a refetch for BOTH articles and videos.
-  Future<void> selectCountryAndFetchNews(String? newCountryCode) async {
-    _selectedCountryCode = newCountryCode;
-    
-    // ✅ REMOVED: Logic for resetting language is no longer needed.
-    
-    await Future.wait([
-      fetchArticles(force: true),
-      fetchVideos(force: true),
-    ]);
-  }
-
-  // ✅ REMOVED: Language selection method is no longer needed.
-  // Future<void> selectLanguageAndFetchVideos(String? newLanguageCode) async { ... }
-
-  /// Fetches articles, passing the selected country code to the service.
+  /// Fetches articles
   Future<void> fetchArticles({bool force = false}) async {
     if (_articles.isNotEmpty && !force) return;
 
@@ -57,7 +42,7 @@ class NewsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _articles = await _articleService.fetchLatestAgriNews(countryCode: _selectedCountryCode);
+      _articles = await _articleService.fetchLatestAgriNews();
     } catch (e) {
       _articleErrorMessage = e.toString();
       debugPrint("NewsProvider (Articles) Error: $_articleErrorMessage");
@@ -67,7 +52,7 @@ class NewsProvider with ChangeNotifier {
     }
   }
 
-  /// ✅ UPDATED: Fetches videos, now only passing the selected country code.
+  /// Fetches videos
   Future<void> fetchVideos({bool force = false}) async {
     if (_videos.isNotEmpty && !force) return;
 
@@ -76,10 +61,7 @@ class NewsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _videos = await _videoService.fetchLatestAgriVideos(
-        regionCode: _selectedCountryCode,
-        // languageCode parameter is removed.
-      );
+      _videos = await _videoService.fetchLatestAgriVideos();
     } catch (e) {
       _videoErrorMessage = e.toString();
       debugPrint("NewsProvider (Videos) Error: $_videoErrorMessage");
@@ -89,4 +71,3 @@ class NewsProvider with ChangeNotifier {
     }
   }
 }
-

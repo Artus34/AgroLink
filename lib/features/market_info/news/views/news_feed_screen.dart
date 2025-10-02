@@ -8,24 +8,6 @@ import '../controllers/news_provider.dart';
 import '../services/article_news_service.dart';
 import '../services/video_news_service.dart';
 
-// ✅ REMOVED: Pakistan has been removed from the list.
-const Map<String, String> _countryMap = {
-  'All Countries': '',
-  'United States': 'us',
-  'India': 'in',
-  'United Kingdom': 'gb',
-  'Canada': 'ca',
-  'Australia': 'au',
-  'Germany': 'de',
-  'France': 'fr',
-  'Brazil': 'br',
-  'South Africa': 'za',
-  'Nigeria': 'ng',
-  'Kenya': 'ke',
-  'Philippines': 'ph',
-};
-
-
 class NewsFeedScreen extends StatefulWidget {
   const NewsFeedScreen({Key? key}) : super(key: key);
 
@@ -37,11 +19,6 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<NewsProvider>(context, listen: false);
-      provider.fetchArticles();
-      provider.fetchVideos();
-    });
   }
 
   Future<void> _launchUrl(String urlString) async {
@@ -96,42 +73,26 @@ class _ArticleFeedView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<NewsProvider>(
       builder: (context, provider, child) {
-        return Column(
-          children: [
-            _CountryDropdown(
-              selectedCountryCode: provider.selectedCountryCode,
-              onChanged: (newCode) {
-                provider.selectCountryAndFetchNews(newCode);
-              },
-            ),
-            Expanded(
-              child: Builder(
-                builder: (context) {
-                  if (provider.isArticlesLoading && provider.articles.isEmpty) {
-                    return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
-                  }
-                  if (provider.articleErrorMessage != null && provider.articles.isEmpty) {
-                    return Center(child: Text('Error: ${provider.articleErrorMessage}'));
-                  }
-                  if (provider.articles.isEmpty && !provider.isArticlesLoading) {
-                    return const Center(child: Text('No articles found for the selected country.'));
-                  }
-                  return RefreshIndicator(
-                    onRefresh: () => provider.fetchArticles(force: true),
-                    color: AppColors.primaryGreen,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(8.0),
-                      itemCount: provider.articles.length,
-                      itemBuilder: (context, index) {
-                        final article = provider.articles[index];
-                        return _ArticleListItem(article: article, onTap: () => onLaunchUrl(article.articleUrl));
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+        if (provider.isArticlesLoading && provider.articles.isEmpty) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+        }
+        if (provider.articleErrorMessage != null && provider.articles.isEmpty) {
+          return Center(child: Text('Error: ${provider.articleErrorMessage}'));
+        }
+        if (provider.articles.isEmpty && !provider.isArticlesLoading) {
+          return const Center(child: Text('No articles found.'));
+        }
+        return RefreshIndicator(
+          onRefresh: () => provider.fetchArticles(force: true),
+          color: AppColors.primaryGreen,
+          child: ListView.builder(
+            padding: const EdgeInsets.all(8.0),
+            itemCount: provider.articles.length,
+            itemBuilder: (context, index) {
+              final article = provider.articles[index];
+              return _ArticleListItem(article: article, onTap: () => onLaunchUrl(article.articleUrl));
+            },
+          ),
         );
       },
     );
@@ -147,94 +108,36 @@ class _VideoFeedView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<NewsProvider>(
       builder: (context, provider, child) {
-        return Column(
-          children: [
-            // ✅ UPDATED: The video tab now only shows the country dropdown.
-            _CountryDropdown(
-              selectedCountryCode: provider.selectedCountryCode,
-              onChanged: (newCode) {
-                provider.selectCountryAndFetchNews(newCode);
-              },
-            ),
-            Expanded(
-              child: Builder(
-                builder: (context) {
-                  if (provider.isVideosLoading && provider.videos.isEmpty) {
-                    return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
-                  }
-                  if (provider.videoErrorMessage != null && provider.videos.isEmpty) {
-                    return Center(child: Text('Error: ${provider.videoErrorMessage}'));
-                  }
-                   if (provider.videos.isEmpty && !provider.isVideosLoading) {
-                    return const Center(child: Text('No videos found for the selected country.'));
-                  }
-                  return RefreshIndicator(
-                    onRefresh: () => provider.fetchVideos(force: true),
-                    color: AppColors.primaryGreen,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(8.0),
-                      itemCount: provider.videos.length + 1, 
-                      itemBuilder: (context, index) {
-                        if (index == provider.videos.length) {
-                          return const _DisclaimerCard();
-                        }
-                        final video = provider.videos[index];
-                        return _VideoListItem(video: video, onTap: () => onLaunchUrl(video.videoUrl));
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+        if (provider.isVideosLoading && provider.videos.isEmpty) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+        }
+        if (provider.videoErrorMessage != null && provider.videos.isEmpty) {
+          return Center(child: Text('Error: ${provider.videoErrorMessage}'));
+        }
+        if (provider.videos.isEmpty && !provider.isVideosLoading) {
+          return const Center(child: Text('No videos found.'));
+        }
+        return RefreshIndicator(
+          onRefresh: () => provider.fetchVideos(force: true),
+          color: AppColors.primaryGreen,
+          child: ListView.builder(
+            padding: const EdgeInsets.all(8.0),
+            itemCount: provider.videos.length + 1,
+            itemBuilder: (context, index) {
+              if (index == provider.videos.length) {
+                return const _DisclaimerCard();
+              }
+              final video = provider.videos[index];
+              return _VideoListItem(video: video, onTap: () => onLaunchUrl(video.videoUrl));
+            },
+          ),
         );
       },
     );
   }
 }
 
-
-// --- DROPDOWN WIDGETS ---
-
-class _CountryDropdown extends StatelessWidget {
-  final String? selectedCountryCode;
-  final ValueChanged<String?> onChanged;
-
-  const _CountryDropdown({this.selectedCountryCode, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-        decoration: BoxDecoration(
-          color: AppColors.lightCard,
-          borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            isExpanded: true,
-            value: selectedCountryCode ?? '',
-            icon: const Icon(Icons.public, color: AppColors.primaryGreen),
-            items: _countryMap.entries.map((entry) {
-              return DropdownMenuItem<String>(
-                value: entry.value,
-                child: Text(entry.key),
-              );
-            }).toList(),
-            onChanged: onChanged,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ✅ REMOVED: The language dropdown widget is no longer needed.
-
-// --- OTHER WIDGETS (UNCHANGED) ---
+// --- OTHER WIDGETS ---
 
 class _DisclaimerCard extends StatelessWidget {
   const _DisclaimerCard();
@@ -358,4 +261,3 @@ class _VideoListItem extends StatelessWidget {
     );
   }
 }
-

@@ -56,12 +56,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final bool isAdminViewing = args?['isAdminViewing'] ?? false;
 
+    // REMOVED: {'icon': Icons.wb_sunny_outlined, 'title': 'Weather Forecast', 'subtitle': 'View detailed weather forecast.'},
     final List<Map<String, dynamic>> featureCards = [
       {'icon': Icons.grass, 'title': 'Predict Crop', 'subtitle': 'Get AI-powered crop suggestions.'},
       {'icon': Icons.trending_up, 'title': 'Yield Prediction', 'subtitle': 'Predict your crop yield.'},
       {'icon': Icons.water_drop_outlined, 'title': 'Predict Rainfall', 'subtitle': 'Estimate annual rainfall.'},
       {'icon': Icons.science_outlined, 'title': 'Fertilizer Suggestion', 'subtitle': 'Find the right fertilizer.'},
-      {'icon': Icons.wb_sunny_outlined, 'title': 'Weather Forecast', 'subtitle': 'View detailed weather forecast.'},
       {'icon': Icons.feedback_outlined, 'title': 'Submit Feedback', 'subtitle': 'Share your thoughts with us.'},
     ];
 
@@ -134,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 24),
-              _buildCropSalesCard(),
+              // REMOVED: _buildCropSalesCard(),
             ],
           ),
         ),
@@ -187,6 +187,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // REMOVED: _buildCropSalesCard()
+  /*
   Widget _buildCropSalesCard() {
     return Card(
       child: Padding(
@@ -209,6 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+  */
 }
 
 // --- NEW NEWS PANEL WIDGET ---
@@ -471,4 +474,3 @@ class _FeatureCard extends StatelessWidget {
     );
   }
 }
-
