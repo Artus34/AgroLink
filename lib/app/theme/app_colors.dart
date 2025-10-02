@@ -19,4 +19,9 @@ class AppColors {
   static const Color lightCard = Colors.white;
   static const Color textPrimary = Color(0xFF212121);
   static const Color textSecondary = Color(0xFF757575);
+  static const Color errorRed = Color.fromARGB(255, 236, 41, 41);
+
+  static const Color accentBlue = Color(0xFF2196F3);
+  static const Color botBubble = Color(0xFFE8F5E9);
+  static const Color userBubble = Color(0xFF2196F3);
 }

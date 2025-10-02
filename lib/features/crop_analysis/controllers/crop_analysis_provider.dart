@@ -1,40 +1,47 @@
 import 'package:flutter/material.dart';
-import '../models/commodity_model.dart';
+import '../models/Price_data.dart';
 import '../services/crop_analysis_service.dart';
 
 class CropAnalysisProvider with ChangeNotifier {
   final CropAnalysisService _service = CropAnalysisService();
 
-  List<Commodity> _commodities = [];
+  List<PriceData> _priceData = [];
   bool _isLoading = false;
   String? _errorMessage;
 
-  List<Commodity> get commodities => _commodities;
+  List<PriceData> get priceData => _priceData;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  /// Fetches the list of commodities and updates the state.
-  Future<void> fetchCommodities() async {
+  Future<void> fetchPriceData({
+    required int commodityId,
+    required int stateId,
+    List<int>? districtIds,
+    List<int>? marketIds,
+    required String fromDate,
+    required String toDate,
+  }) async {
+    if (_isLoading) return;
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final fetchedList = await _service.fetchCommodities();
-      _commodities = fetchedList;
+      final fetchedList = await _service.fetchPriceData(
+        commodityId: commodityId,
+        stateId: stateId,
+        districtIds: districtIds,
+        marketIds: marketIds,
+        fromDate: fromDate,
+        toDate: toDate,
+      );
+      _priceData = fetchedList;
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
-      print('Error in provider: $_errorMessage');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
-  }
-
-  // Placeholder for future features (e.g., fetching price trends)
-  Future<void> fetchPriceTrend(int commodityId) async {
-    // Implement logic to fetch specific price trend data here
-    // For now, it's a placeholder.
-    print('Fetching price trend for commodity ID: $commodityId');
   }
 }

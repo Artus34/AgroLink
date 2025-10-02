@@ -1,3 +1,4 @@
+import 'package:agrolink/features/chat_bot/views/chatbot_screen.dart' hide AppColors;
 import 'package:agrolink/features/crop_analysis/controllers/crop_analysis_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,7 +10,6 @@ import 'features/auth/controllers/auth_provider.dart';
 import 'features/auth/views/login_screen.dart';
 import 'features/auth/views/signup_screen.dart';
 import 'features/home/views/home_screen.dart';
-import 'features/home/views/admin_home_screen.dart';
 import 'firebase_options.dart';
 
 // Your other provider imports
@@ -91,10 +91,10 @@ class MyApp extends StatelessWidget {
         initialRoute: '/',
         routes: {
           '/': (context) => LoginScreen(),
+          // '/home': (context) => const ChatbotScreen(),
           '/home': (context) => const HomeScreen(),
+          '/chat-bot': (context) => const ChatbotScreen(),
           '/signup': (context) => SignUpScreen(),
-          // '/admin_home': (context) => const AdminHomeScreen(),
-          // Your other prediction routes
           '/predict_crop': (context) => CropPredictionScreen(),
           '/predict_yield': (context) => YieldPredictionScreen(),
           '/predict_rainfall': (context) => const RainfallPredictionScreen(),

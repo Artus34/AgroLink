@@ -1,55 +1,76 @@
 import 'dart:convert';
+import 'package:agrolink/features/config.dart';
+import 'package:agrolink/features/crop_analysis/models/Price_data.dart';
 import 'package:http/http.dart' as http;
-import '../models/commodity_model.dart';
 
 class CropAnalysisService {
-  // ⚠️ IMPORTANT: Replace this placeholder with your actual CEDA API key.
-  // The API key is required in the Authorization header.
-  static const String _apiKey = 'af854182725b6ab4699c5395edb9614827afabace29734ba5464ae48d377d0b3';
-  static const String _baseUrl = 'https://api.ceda.ashoka.edu.in/v1/agmarknet';
+  static const String _CropAnalysisApiKey = Config.CropAnalysisApiKey;
+  static const String _CropAnalysisApiUrl = Config.CropAnalysisApiUrl;
 
-  /// Fetches the list of all available commodities from the CEDA Agmarknet API.
-  Future<List<Commodity>> fetchCommodities() async {
-    const url = '$_baseUrl/commodities';
-    
+  Future<List<PriceData>> fetchPriceData({
+    required int commodityId,
+    required int stateId,
+    List<int>? districtIds,
+    List<int>? marketIds,
+    required String fromDate,
+    required String toDate,
+  }) async {
+    const url = '$_CropAnalysisApiUrl/prices';
+
+    final requestBody = jsonEncode({
+      "commodity_id": commodityId,
+      "state_id": stateId,
+      if (districtIds != null && districtIds.isNotEmpty)
+        "district_id": districtIds,
+      if (marketIds != null && marketIds.isNotEmpty) "market_id": marketIds,
+      "from_date": fromDate,
+      "to_date": toDate,
+    });
+
     try {
-      // ✅ FIX: The Authorization header is crucial to avoid the 400 Bad Request error.
-      // It must be included in the headers map.
-      final response = await http.get(
+      final response = await http.post(
         Uri.parse(url),
         headers: {
           'accept': 'application/json',
-          'Authorization': 'Bearer $_apiKey',
+          'Authorization': 'Bearer $_CropAnalysisApiKey',
+          'Content-Type': 'application/json',
         },
+        body: requestBody,
       );
+
+      print('🔎 API Status Code: ${response.statusCode}');
+      print('🔎 API Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
-        
-        // Check if the response structure is as expected: { "output": { "data": [...] } }
-        final List<dynamic>? commodityListJson = data['output']?['data'];
 
-        if (commodityListJson != null) {
-          return commodityListJson
-              .map((json) => Commodity.fromJson(json as Map<String, dynamic>))
+        if (data.containsKey('output') &&
+            data['output'] != null &&
+            data['output']['data'] != null) {
+          final List<dynamic> priceListJson = data['output']['data'];
+
+          return priceListJson
+              .map((json) => PriceData.fromJson(json as Map<String, dynamic>))
               .toList();
         } else {
-          throw Exception('Failed to parse commodity data: Invalid structure.');
+          print('⚠️ API response has no "output.data".');
+          return [];
         }
       } else {
-        // Handle specific API errors
-        print('API Error: Status Code ${response.statusCode}');
-        print('API Response Body: ${response.body}');
-        
         if (response.statusCode == 401 || response.statusCode == 403) {
-           throw Exception('Authentication failed. Check your API Key.');
+          throw Exception('Authentication failed. Check your API Key.');
+        } else if (response.statusCode == 400) {
+          throw Exception(
+              'Bad Request: Check your POST body filters/dates for validity.');
         } else {
-           throw Exception('Failed to load commodities. Status: ${response.statusCode}');
+          throw Exception(
+              'Failed to load price data. Status: ${response.statusCode}');
         }
       }
     } catch (e) {
-      print('Network/Parsing Error: $e');
-      throw Exception('An error occurred while fetching commodities: $e');
+      print('❌ Network/Parsing Error: $e');
+      throw Exception(
+          'An error occurred while fetching price data: ${e.toString()}');
     }
   }
 }

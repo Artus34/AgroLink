@@ -176,26 +176,17 @@ class LoginScreen extends StatelessWidget {
 
       // Check if login was successful and the widget is still mounted
       if (role != null && context.mounted) {
-        // Redirect based on the role
-        switch (role) {
-          case 'admin':
-            Navigator.pushReplacementNamed(context, '/admin_home');
-            break;
-          case 'user':
-            Navigator.pushReplacementNamed(context, '/home');
-            break;
-          default:
-            // Optional: Handle unknown roles or show an error
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                backgroundColor: Colors.redAccent,
-                content: Text('Could not determine user role.'),
-              ),
-            );
-        }
-      }
-      // If role is null, the login failed, and the Consumer widget
-      // will automatically display the error message from the provider.
+  // Redirect all users to the standard Home screen
+  Navigator.pushReplacementNamed(context, '/home');
+} else if (context.mounted) {
+  // Optional: Handle null or unknown role
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      backgroundColor: Colors.redAccent,
+      content: Text('Could not determine user role.'),
+    ),
+  );
+}
     }
   }
 }
