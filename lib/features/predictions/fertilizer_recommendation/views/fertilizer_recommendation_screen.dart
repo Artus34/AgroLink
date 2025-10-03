@@ -10,10 +10,12 @@ class FertilizerRecommendationScreen extends StatefulWidget {
   const FertilizerRecommendationScreen({super.key});
 
   @override
-  State<FertilizerRecommendationScreen> createState() => _FertilizerRecommendationScreenState();
+  State<FertilizerRecommendationScreen> createState() =>
+      _FertilizerRecommendationScreenState();
 }
 
-class _FertilizerRecommendationScreenState extends State<FertilizerRecommendationScreen> {
+class _FertilizerRecommendationScreenState
+    extends State<FertilizerRecommendationScreen> {
   final _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _inputControllers = {
     'temperature': TextEditingController(),
@@ -32,7 +34,8 @@ class _FertilizerRecommendationScreenState extends State<FertilizerRecommendatio
     super.initState();
     // ➡️ Fetch categories from the API when the screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<FertilizerRecommendationProvider>(context, listen: false).fetchCategories();
+      Provider.of<FertilizerRecommendationProvider>(context, listen: false)
+          .fetchCategories();
     });
   }
 
@@ -44,7 +47,8 @@ class _FertilizerRecommendationScreenState extends State<FertilizerRecommendatio
 
   void _submitForm(BuildContext context) {
     if (_formKey.currentState!.validate()) {
-      final provider = Provider.of<FertilizerRecommendationProvider>(context, listen: false);
+      final provider =
+          Provider.of<FertilizerRecommendationProvider>(context, listen: false);
 
       // ➡️ Corrected payload keys and data types to match FastAPI model
       final Map<String, dynamic> fertilizerData = {
@@ -65,7 +69,8 @@ class _FertilizerRecommendationScreenState extends State<FertilizerRecommendatio
       } else {
         // You might want to show a SnackBar or an alert here
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select both soil and crop types.')),
+          const SnackBar(
+              content: Text('Please select both soil and crop types.')),
         );
       }
     }
@@ -134,23 +139,27 @@ class _FertilizerRecommendationScreenState extends State<FertilizerRecommendatio
                         const SizedBox(height: 32),
                         Consumer<FertilizerRecommendationProvider>(
                           builder: (context, provider, child) {
-                            if (provider.isLoading) {
+                            if (provider.isRecommendationLoading) {
                               return const Center(
-                                child: CircularProgressIndicator(color: AppColors.primaryGreen),
+                                child: CircularProgressIndicator(
+                                    color: AppColors.primaryGreen),
                               );
                             }
+
                             if (provider.errorMessage != null) {
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 16.0),
                                 child: Text(
                                   provider.errorMessage!,
-                                  style: const TextStyle(color: Colors.redAccent),
+                                  style:
+                                      const TextStyle(color: Colors.redAccent),
                                   textAlign: TextAlign.center,
                                 ),
                               );
                             }
                             if (provider.recommendation != null) {
-                              return _buildRecommendationResultCard(provider.recommendation!);
+                              return _buildRecommendationResultCard(
+                                  provider.recommendation!);
                             }
                             return const SizedBox.shrink();
                           },
@@ -160,7 +169,8 @@ class _FertilizerRecommendationScreenState extends State<FertilizerRecommendatio
                             onPressed: () => _submitForm(context),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryGreen,
-                              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 40, vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -189,7 +199,8 @@ class _FertilizerRecommendationScreenState extends State<FertilizerRecommendatio
 
   Widget _buildFormFields(BuildContext context) {
     final numericFields = _inputControllers.keys.toList();
-    final provider = Provider.of<FertilizerRecommendationProvider>(context, listen: false);
+    final provider =
+        Provider.of<FertilizerRecommendationProvider>(context, listen: false);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -217,7 +228,10 @@ class _FertilizerRecommendationScreenState extends State<FertilizerRecommendatio
               itemCount: numericFields.length,
               itemBuilder: (context, index) {
                 final fieldName = numericFields[index];
-                final label = fieldName.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ');
+                final label = fieldName
+                    .split('_')
+                    .map((word) => word[0].toUpperCase() + word.substring(1))
+                    .join(' ');
                 final hint = fieldName == 'temperature' ? '°C' : '%';
                 return _buildTextField(
                   controller: _inputControllers[fieldName]!,
@@ -234,7 +248,8 @@ class _FertilizerRecommendationScreenState extends State<FertilizerRecommendatio
     );
   }
 
-  Widget _buildDropdownFields(BuildContext context, FertilizerRecommendationProvider provider) {
+  Widget _buildDropdownFields(
+      BuildContext context, FertilizerRecommendationProvider provider) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 600) {
@@ -356,7 +371,9 @@ class _FertilizerRecommendationScreenState extends State<FertilizerRecommendatio
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+        Text(label,
+            style:
+                const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
@@ -368,17 +385,22 @@ class _FertilizerRecommendationScreenState extends State<FertilizerRecommendatio
             fillColor: AppColors.lightCard,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.textSecondary, width: 1.0),
+              borderSide:
+                  const BorderSide(color: AppColors.textSecondary, width: 1.0),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2.0),
+              borderSide:
+                  const BorderSide(color: AppColors.primaryGreen, width: 2.0),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
-          keyboardType: const TextInputType.numberWithOptions(decimal: false), // ➡️ Change to decimal: false
+          keyboardType: const TextInputType.numberWithOptions(
+              decimal: false), // ➡️ Change to decimal: false
           inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d+')), // ➡️ Only allow integers
+            FilteringTextInputFormatter.allow(
+                RegExp(r'^\d+')), // ➡️ Only allow integers
           ],
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -403,9 +425,12 @@ class _FertilizerRecommendationScreenState extends State<FertilizerRecommendatio
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+        Text(label,
+            style:
+                const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
         const SizedBox(height: 8),
-        DropdownButtonFormField<int>( // ➡️ Updated type
+        DropdownButtonFormField<int>(
+          // ➡️ Updated type
           value: selectedValue,
           onChanged: onChanged,
           isExpanded: true,
@@ -414,18 +439,23 @@ class _FertilizerRecommendationScreenState extends State<FertilizerRecommendatio
             fillColor: AppColors.lightCard,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.textSecondary, width: 1.0),
+              borderSide:
+                  const BorderSide(color: AppColors.textSecondary, width: 1.0),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2.0),
+              borderSide:
+                  const BorderSide(color: AppColors.primaryGreen, width: 2.0),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
-          items: options.map<DropdownMenuItem<int>>((Map<String, dynamic> item) {
+          items:
+              options.map<DropdownMenuItem<int>>((Map<String, dynamic> item) {
             return DropdownMenuItem<int>(
               value: item['id'],
-              child: Text(item['name'], style: const TextStyle(color: AppColors.textPrimary)),
+              child: Text(item['name'],
+                  style: const TextStyle(color: AppColors.textPrimary)),
             );
           }).toList(),
           validator: (value) {

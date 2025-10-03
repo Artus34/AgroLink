@@ -5,28 +5,31 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class FertilizerRecommendationProvider extends ChangeNotifier {
-  // Base URL for the FastAPI backend.
-  // ➡️ Make sure this URL is correct for your deployed API.
   static const String _apiBaseUrl = 'https://agrofertilizer.onrender.com';
 
-  bool _isLoading = false;
+  // Separate loading states
+  bool _isCategoryLoading = false;
+  bool _isRecommendationLoading = false;
+
   String? _errorMessage;
   String? _recommendation;
 
   List<Map<String, dynamic>> _soilTypes = [];
   List<Map<String, dynamic>> _cropTypes = [];
 
-  // Getters to expose the private variables
-  bool get isLoading => _isLoading;
+  // Getters
+  bool get isCategoryLoading => _isCategoryLoading;
+  bool get isRecommendationLoading => _isRecommendationLoading;
   String? get errorMessage => _errorMessage;
   String? get recommendation => _recommendation;
   List<Map<String, dynamic>> get soilTypes => _soilTypes;
   List<Map<String, dynamic>> get cropTypes => _cropTypes;
 
-  // Method to fetch the categories (soil and crop types) from the API.
+  // Fetch categories (soil and crop types)
   Future<void> fetchCategories() async {
-    _setLoading(true);
+    _isCategoryLoading = true;
     _clearError();
+    notifyListeners();
 
     try {
       final response = await http.get(Uri.parse('$_apiBaseUrl/categories'));
@@ -39,17 +42,20 @@ class FertilizerRecommendationProvider extends ChangeNotifier {
         _setErrorMessage('Failed to load categories. Please try again.');
       }
     } catch (e) {
-      _setErrorMessage('Network error: Check your internet connection or server status.');
+      _setErrorMessage(
+          'Network error: Check your internet connection or server status.');
     } finally {
-      _setLoading(false);
+      _isCategoryLoading = false;
+      notifyListeners();
     }
   }
 
-  // Method to send the data and get a fertilizer recommendation.
+  // Get fertilizer recommendation
   Future<void> getFertilizerRecommendation(Map<String, dynamic> data) async {
-    _setLoading(true);
+    _isRecommendationLoading = true;
     _clearError();
     _resetRecommendation();
+    notifyListeners();
 
     try {
       final response = await http.post(
@@ -62,23 +68,19 @@ class FertilizerRecommendationProvider extends ChangeNotifier {
         final responseData = json.decode(response.body);
         _recommendation = responseData['recommended_fertilizer'];
       } else {
-        // Handle errors from the API, including the 422 Unprocessable Content error.
         final errorData = json.decode(response.body);
-        _setErrorMessage(errorData['detail'] ?? 'Failed to get recommendation.');
+        _setErrorMessage(
+            errorData['detail'] ?? 'Failed to get recommendation.');
       }
     } catch (e) {
       _setErrorMessage('Network error: Could not connect to the server.');
     } finally {
-      _setLoading(false);
+      _isRecommendationLoading = false;
+      notifyListeners();
     }
   }
 
-  // Helper methods to manage state.
-  void _setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
-  }
-
+  // Helpers
   void _setErrorMessage(String message) {
     _errorMessage = message;
     notifyListeners();
@@ -86,7 +88,6 @@ class FertilizerRecommendationProvider extends ChangeNotifier {
 
   void _clearError() {
     _errorMessage = null;
-    notifyListeners();
   }
 
   void resetRecommendation() {
@@ -96,6 +97,5 @@ class FertilizerRecommendationProvider extends ChangeNotifier {
 
   void _resetRecommendation() {
     _recommendation = null;
-    // We don't notify here to prevent a flicker during a new prediction.
   }
 }

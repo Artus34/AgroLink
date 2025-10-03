@@ -1,4 +1,4 @@
-import 'package:agrolink/features/chat_bot/views/chatbot_screen.dart' hide AppColors;
+import 'package:agrolink/features/chat_bot/views/chatbot_screen.dart';
 import 'package:agrolink/features/crop_analysis/controllers/crop_analysis_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -12,7 +12,6 @@ import 'features/auth/views/signup_screen.dart';
 import 'features/home/views/home_screen.dart';
 import 'firebase_options.dart';
 
-// Your other provider imports
 import 'features/predictions/crop_prediction/controllers/crop_prediction_provider.dart';
 import 'features/predictions/yield_prediction/controllers/yield_prediction_provider.dart';
 import 'features/predictions/rainfall_prediction/controllers/rainfall_prediction_provider.dart';
@@ -20,9 +19,8 @@ import 'features/predictions/fertilizer_recommendation/controllers/fertilizer_re
 import 'features/predictions/crop_prediction/views/crop_prediction_screen.dart';
 import 'features/predictions/yield_prediction/views/yield_prediction_screen.dart';
 import 'features/predictions/rainfall_prediction/views/rainfall_prediction_screen.dart';
-// --- Feature Provider Imports ---
+
 import 'features/market_info/weather/controllers/weather_provider.dart';
-// ✅ ADDED: Import for the new NewsProvider.
 import 'features/market_info/news/controllers/news_provider.dart';
 
 void main() async {
@@ -59,7 +57,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => WeatherProvider()),
         // ✅ ADDED: Registered the NewsProvider so the app can use it.
         ChangeNotifierProvider(create: (context) => NewsProvider()),
-        ChangeNotifierProvider(create: (_) => CropAnalysisProvider(),
+        ChangeNotifierProvider(
+          create: (_) => CropAnalysisProvider(),
         ),
       ],
       child: MaterialApp(
