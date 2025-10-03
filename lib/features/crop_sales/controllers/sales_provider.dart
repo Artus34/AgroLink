@@ -1,4 +1,4 @@
-import 'dart:typed_data'; // ⭐️ MODIFICATION: Import for Uint8List
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
@@ -22,6 +22,8 @@ class SalesProvider with ChangeNotifier {
   List<ListingModel> _allListings = [];
   List<ListingModel> _myListings = [];
   List<TransactionModel> _myTransactions = [];
+  
+  String _searchQuery = '';
 
   // --- Public Getters ---
   bool get isLoading => _isLoading;
@@ -30,8 +32,23 @@ class SalesProvider with ChangeNotifier {
   List<ListingModel> get myListings => _myListings;
   List<TransactionModel> get myTransactions => _myTransactions;
 
+  List<ListingModel> get filteredListings {
+    if (_searchQuery.isEmpty) {
+      return _allListings;
+    } else {
+      return _allListings.where((listing) {
+        return listing.productName.toLowerCase().contains(_searchQuery.toLowerCase());
+      }).toList();
+    }
+  }
+
   void update(AuthProvider authProvider) {
     _currentUser = authProvider.userModel;
+  }
+
+  void updateSearchQuery(String newQuery) {
+    _searchQuery = newQuery;
+    notifyListeners();
   }
 
   /// Creates a new sales listing.
@@ -41,7 +58,6 @@ class SalesProvider with ChangeNotifier {
     required double price,
     required int quantity,
     required String unit,
-    // ⭐️ MODIFICATION: Changed parameter from File to Uint8List
     required Uint8List imageBytes,
   }) async {
     if (_currentUser == null) {
@@ -51,16 +67,13 @@ class SalesProvider with ChangeNotifier {
     _setLoading(true);
 
     try {
-      // 1. Upload the image to ImageKit
       final String fileName = "${_currentUser!.uid}_${DateTime.now().millisecondsSinceEpoch}";
-      // ⭐️ MODIFICATION: Pass imageBytes with the correct parameter name
       final String? imageUrl = await _imageService.uploadImage(imageBytes: imageBytes, fileName: fileName);
 
       if (imageUrl == null) {
         throw Exception("Image upload failed. Please try again.");
       }
 
-      // 2. Create the ListingModel object
       final String listingId = _uuid.v4();
       final newListing = ListingModel(
         listingId: listingId,
@@ -76,7 +89,6 @@ class SalesProvider with ChangeNotifier {
         createdAt: Timestamp.now(),
       );
 
-      // 3. Save the listing to Firestore
       await _firestore.collection('listings').doc(listingId).set(newListing.toMap());
       _setLoading(false);
       return true;
@@ -86,8 +98,6 @@ class SalesProvider with ChangeNotifier {
       return false;
     }
   }
-
-  // --- All other methods remain the same ---
 
   Future<void> fetchAllListings() async {
     _setLoading(true);
@@ -213,6 +223,26 @@ class SalesProvider with ChangeNotifier {
       return false;
     }
   }
+  
+  // ⭐️ NEW: A function to delete a user's own listing.
+  Future<void> deleteListing(String listingId) async {
+    _setLoading(true);
+    try {
+      // 1. Delete the document from the Firestore 'listings' collection.
+      await _firestore.collection('listings').doc(listingId).delete();
+
+      // 2. Remove the listing from the local '_myListings' state.
+      // This provides an instant UI update without needing to re-fetch.
+      _myListings.removeWhere((listing) => listing.listingId == listingId);
+
+    } catch (e) {
+      // If anything goes wrong, set an error message.
+      _setError("Failed to delete the listing. Please try again.");
+    } finally {
+      // 3. Ensure the loading indicator is turned off, regardless of success or failure.
+      _setLoading(false);
+    }
+  }
 
   void _setLoading(bool loading) {
     _isLoading = loading;
@@ -228,4 +258,3 @@ class SalesProvider with ChangeNotifier {
     notifyListeners();
   }
 }
-

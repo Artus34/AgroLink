@@ -23,11 +23,50 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     });
   }
 
+  // ⭐️ NEW: A helper method to show a confirmation dialog before deleting.
+  Future<void> _showDeleteConfirmationDialog(BuildContext context, String listingId) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must tap a button to dismiss
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: const SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Are you sure you want to delete this listing?'),
+                Text('This action cannot be undone.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close the dialog
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete'),
+              onPressed: () {
+                // Call the provider to delete the listing.
+                // listen: false because we are inside a callback.
+                Provider.of<SalesProvider>(context, listen: false).deleteListing(listingId);
+                Navigator.of(dialogContext).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Listings'),
+        title: const Text('My Products'), // ⭐️ RENAMED for clarity
       ),
       body: Consumer<SalesProvider>(
         builder: (context, provider, child) {
@@ -90,13 +129,28 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text('Price: ₹${listing.price} / ${listing.unit}'),
-                    trailing: Chip(
-                      label: Text(
-                        listing.isAvailable ? 'Available' : 'Sold',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                      backgroundColor: listing.isAvailable ? AppColors.primaryGreen : Colors.grey,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    // ⭐️ MODIFICATION: The trailing widget is now a Row.
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min, // Important to keep the row compact
+                      children: [
+                        Chip(
+                          label: Text(
+                            listing.isAvailable ? 'Available' : 'Sold',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                          backgroundColor: listing.isAvailable ? AppColors.primaryGreen : Colors.grey,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        // ⭐️ NEW: The delete button
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                          tooltip: 'Delete Listing',
+                          onPressed: () {
+                            // Call the helper method to show the dialog.
+                            _showDeleteConfirmationDialog(context, listing.listingId);
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 );

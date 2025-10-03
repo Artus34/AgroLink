@@ -30,57 +30,99 @@ class _SalesDashboardScreenState extends State<SalesDashboardScreen> {
       appBar: AppBar(
         title: const Text('Marketplace'),
       ),
-      body: Consumer<SalesProvider>(
-        builder: (context, provider, child) {
-          // Show a loading spinner while data is being fetched.
-          if (provider.isLoading && provider.allListings.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          // Show an error message if something went wrong.
-          if (provider.errorMessage != null && provider.allListings.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  provider.errorMessage!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.redAccent),
+      // ⭐️ MODIFICATION: The body is now a Column containing the search bar and the list.
+      body: Column(
+        children: [
+          // ⭐️ NEW: Search Bar Widget
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 8.0),
+            child: TextField(
+              decoration: const InputDecoration(
+                labelText: 'Search Products',
+                hintText: 'e.g., Apple, Wheat, Tomato',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12.0)),
                 ),
               ),
-            );
-          }
-
-          // Show a message if there are no available listings.
-          if (provider.allListings.isEmpty) {
-            return const Center(
-              child: Text(
-                'No listings available at the moment.\nPlease check back later.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            );
-          }
-
-          // Display the grid of listings.
-          return RefreshIndicator(
-            onRefresh: () => provider.fetchAllListings(),
-            child: GridView.builder(
-              padding: const EdgeInsets.all(12.0),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // A responsive 2-column grid
-                crossAxisSpacing: 12.0,
-                mainAxisSpacing: 12.0,
-                childAspectRatio: 0.75, // Adjust for better item proportions
-              ),
-              itemCount: provider.allListings.length,
-              itemBuilder: (context, index) {
-                final listing = provider.allListings[index];
-                return _ListingCard(listing: listing);
+              // This is where the magic happens.
+              onChanged: (value) {
+                // We call the 'updateSearchQuery' method in the provider.
+                // We set 'listen: false' because this part doesn't need to rebuild.
+                Provider.of<SalesProvider>(context, listen: false).updateSearchQuery(value);
               },
             ),
-          );
-        },
+          ),
+          // ⭐️ NEW: The Consumer is now wrapped in an Expanded widget to fill the remaining space.
+          Expanded(
+            child: Consumer<SalesProvider>(
+              builder: (context, provider, child) {
+                // Show a loading spinner while data is being fetched.
+                if (provider.isLoading && provider.allListings.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                // Show an error message if something went wrong.
+                if (provider.errorMessage != null && provider.allListings.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        provider.errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.redAccent),
+                      ),
+                    ),
+                  );
+                }
+
+                // ⭐️ NEW: Show a message if there are listings, but none match the search.
+                if (provider.allListings.isNotEmpty && provider.filteredListings.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No products found matching your search.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  );
+                }
+
+                // Show a message if there are no available listings at all.
+                if (provider.allListings.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No listings available at the moment.\nPlease check back later.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  );
+                }
+
+                // Display the grid of listings.
+                return RefreshIndicator(
+                  onRefresh: () => provider.fetchAllListings(),
+                  // ⭐️ MODIFICATION: The GridView now uses 'filteredListings'
+                  child: GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(12.0, 4.0, 12.0, 12.0),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, // A responsive 2-column grid
+                      crossAxisSpacing: 12.0,
+                      mainAxisSpacing: 12.0,
+                      childAspectRatio: 0.75, // Adjust for better item proportions
+                    ),
+                    // ⭐️ MODIFICATION: Use the length of the filtered list.
+                    itemCount: provider.filteredListings.length,
+                    itemBuilder: (context, index) {
+                      // ⭐️ MODIFICATION: Get the listing from the filtered list.
+                      final listing = provider.filteredListings[index];
+                      return _ListingCard(listing: listing);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       // --- Conditional Floating Action Button ---
       // This button is only visible to users with the 'farmer' role.
@@ -155,7 +197,6 @@ class _ListingCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  // ⭐️ MODIFICATION: Formatted the price for consistency.
                   Text(
                     '₹${listing.price.toStringAsFixed(2)} / ${listing.unit}',
                     style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
@@ -176,4 +217,3 @@ class _ListingCard extends StatelessWidget {
     );
   }
 }
-
